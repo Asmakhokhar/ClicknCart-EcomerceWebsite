@@ -9,7 +9,7 @@ export async function registerUserController(request, response) {
     try {
         const { name, email, password } = request.body;
         if(!name || !email || !password){
-            return response.status(400).json({
+            return response.status(400).json({  
                 message : "Provide name, email, password",
                 error : true,
                 success : false
@@ -35,7 +35,7 @@ export async function registerUserController(request, response) {
         const newUser = new ModelUser(payload)
         const save = await newUser.save()
 
-        const verifyEmailUrl = `${process.env.FRONTEND_URL}/verify-email?code=${save?._id}`
+        const verifyEmailUrl = `${process.env,FRONTEND_URL}/verify-email?code=${save?._id}`
         const verifyEmail = await sendEmail({
             sendTo : email,
             subject : "Verify Email from ClicknCart",
@@ -138,7 +138,7 @@ export async function loginController(request, response) {
         }
 
         const accessToken = await generatedAccessToken(user._id)
-        const refreshToken = await generateRefreshToken(user,_id)
+        const refreshToken = await generateRefreshToken(user._id)
         
         const cookieOption = {
             httpOnly : true,
@@ -157,6 +157,44 @@ export async function loginController(request, response) {
                 refreshToken
             }
         })
+        
+    } catch (error) {
+        return response.status(500).json({
+            message : error.message || error,
+            error : true,
+            success : false
+        })
+        
+    }
+    
+}
+
+
+// LOGOUT CONTROLLER 
+
+export async function logoutController(request, response) {
+    try {
+
+
+        const userid = request.userId
+        const cookieOption = {
+            httpOnly : true,
+            secure : true,
+            sameSite : "None"
+        }
+        response.clearCookie("accessToken",cookieOption)
+        response.clearCookie("refreshToken",cookieOption) 
+
+        const removeRefreshToken = await ModelUser.findByIdAndUpdate(userid, {
+            refresh_token : ""
+        })
+
+        return response.json({
+            message : "Logout successfully",
+            error : false,
+            success : true
+        })
+
         
     } catch (error) {
         return response.status(500).json({
